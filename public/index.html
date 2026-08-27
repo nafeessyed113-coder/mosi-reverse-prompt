@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reverse Prompt — powered by MOSS-VL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #16130f;
+    --bg-raised: #1f1a14;
+    --paper: #f2ece1;
+    --ink: #ece5d8;
+    --ink-dim: #a89c88;
+    --amber: #c98a3f;
+    --amber-bright: #e0a45c;
+    --teal: #3f6f68;
+    --rust: #c1502f;
+    --line: #33291f;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(201,138,63,0.08), transparent),
+      var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.5;
+    min-height:100vh;
+  }
+  ::selection{ background: var(--amber); color:#16130f; }
+
+  a{ color: var(--amber-bright); }
+
+  .sprockets{
+    display:flex;
+    gap:10px;
+    padding: 10px 24px;
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--line);
+    overflow:hidden;
+  }
+  .sprockets span{
+    width:8px; height:8px; border-radius:1px;
+    background: var(--line);
+    flex:none;
+  }
+
+  header{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 64px 24px 32px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber-bright);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:18px; height:1px; background: var(--amber);
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(2.1rem, 4.4vw, 3.4rem);
+    line-height: 1.05;
+    margin: 18px 0 14px;
+    max-width: 14ch;
+  }
+  h1 em{
+    font-style: italic;
+    color: var(--amber-bright);
+  }
+  .lede{
+    color: var(--ink-dim);
+    max-width: 56ch;
+    font-size: 1.05rem;
+  }
+
+  main{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  .stage{
+    position: relative;
+    border: 1px solid var(--line);
+    background: var(--bg-raised);
+    border-radius: var(--radius);
+    margin-bottom: 28px;
+    padding: 28px 28px 30px;
+  }
+  .stage-head{
+    display:flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .stage-num{
+    font-family:'Fraunces', serif;
+    font-size: 1.6rem;
+    color: var(--amber-bright);
+    font-variant-numeric: tabular-nums;
+  }
+  .stage-title{
+    font-family:'Fraunces', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  .stage-sub{
+    color: var(--ink-dim);
+    font-size: 0.92rem;
+    margin: 0 0 20px;
+  }
+  .stage.disabled{ opacity: 0.45; pointer-events:none; }
+
+  .film-connector{
+    height: 28px;
+    margin-left: 40px;
+    border-left: 1px dashed var(--line);
+    position: relative;
+  }
+
+  label.field-label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+  }
+
+  input[type="password"], input[type="text"]{
+    width:100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+  }
+  input:focus-visible, button:focus-visible, .dropzone:focus-visible{
+    outline: 2px solid var(--amber-bright);
+    outline-offset: 2px;
+  }
+
+  .dropzone{
+    margin-top: 16px;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 28px;
+    text-align:center;
+    cursor:pointer;
+    color: var(--ink-dim);
+    font-size: 0.92rem;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .dropzone:hover, .dropzone.drag{
+    border-color: var(--amber);
+    background: rgba(201,138,63,0.06);
+  }
+  .dropzone strong{ color: var(--ink); }
+  .dropzone.has-file{
+    border-style: solid;
+    border-color: var(--teal);
+    color: var(--ink);
+  }
+
+  .row{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top: 18px; }
+
+  button.primary{
+    background: var(--amber);
+    color: #16130f;
+    border: none;
+    padding: 12px 22px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
+  button.primary:hover{ background: var(--amber-bright); }
+  button.primary:disabled{ background: var(--line); color: var(--ink-dim); cursor:not-allowed; }
+
+  button.ghost{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 11px 18px;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    cursor:pointer;
+  }
+  button.ghost:hover{ border-color: var(--ink-dim); }
+
+  .toggle-row{
+    display:flex; align-items:center; gap:10px;
+    font-size: 0.9rem; color: var(--ink-dim);
+    margin-top: 4px;
+  }
+  .toggle{
+    width: 34px; height: 20px; border-radius: 20px;
+    background: var(--line);
+    position: relative;
+    cursor:pointer;
+    flex:none;
+  }
+  .toggle::after{
+    content:"";
+    position:absolute; top:2px; left:2px;
+    width:16px; height:16px; border-radius:50%;
+    background: var(--ink-dim);
+    transition: transform .15s ease, background .15s ease;
+  }
+  .toggle.on{ background: rgba(201,138,63,0.35); }
+  .toggle.on::after{ transform: translateX(14px); background: var(--amber-bright); }
+
+  .status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--ink-dim);
+    margin-top: 14px;
+    min-height: 1.2em;
+  }
+  .status.err{ color: var(--rust); }
+  .status.ok{ color: var(--teal); }
+
+  .label-card{
+    margin-top: 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow:hidden;
+  }
+  .label-card .strip{
+    background: var(--teal);
+    color: #eef4f3;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    display:flex;
+    justify-content: space-between;
+  }
+  .label-card textarea{
+    width:100%;
+    min-height: 120px;
+    background: var(--bg);
+    color: var(--ink);
+    border: none;
+    padding: 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    resize: vertical;
+  }
+  .label-card textarea:focus{ outline: none; }
+
+  .meta-line{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-dim);
+    margin-top: 10px;
+    display:flex; gap: 18px; flex-wrap:wrap;
+  }
+
+  video.preview{
+    margin-top: 18px;
+    width:100%;
+    max-height: 360px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background:#000;
+  }
+
+  .note{
+    font-size: 0.85rem;
+    color: var(--ink-dim);
+    background: rgba(193,80,47,0.08);
+    border: 1px solid rgba(193,80,47,0.35);
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    margin-top: 16px;
+  }
+  .note strong{ color: var(--rust); }
+
+  footer{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    color: var(--ink-dim);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sprockets" aria-hidden="true" id="sprockets"></div>
+
+<header>
+  <div class="eyebrow">Reverse Prompt</div>
+  <h1>Watch a video. <em>Get the prompt.</em> Make your own.</h1>
+  <p class="lede">Upload a clip that inspired you. MOSS-VL reads what's actually happening in it, frame by frame, and hands back a generation prompt you can use to make something in your own style.</p>
+</header>
+
+<main>
+
+  <!-- Stage 1 -->
+  <section class="stage" id="stage1">
+    <div class="stage-head">
+      <span class="stage-num">01</span>
+      <span class="stage-title">Watch</span>
+    </div>
+    <p class="stage-sub">Your MOSI.AI API key stays in your browser for this session only. It's never stored.</p>
+
+    <label class="field-label" for="apiKey">MOSI.AI API key</label>
+    <input type="password" id="apiKey" placeholder="sk-...">
+
+    <div style="margin-top:20px;">
+      <label class="field-label">Reference video</label>
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload a video file">
+        <div id="dzText"><strong>Drop a video</strong> or click to browse — MP4, MOV, WebM, up to 200MB</div>
+        <input type="file" id="fileInput" accept="video/*" style="display:none">
+      </div>
+      <video class="preview" id="preview" controls style="display:none;"></video>
+    </div>
+
+    <div class="row">
+      <button class="primary" id="analyzeBtn" disabled>Analyze video</button>
+    </div>
+    <div class="status" id="status1"></div>
+  </section>
+
+  <div class="film-connector"></div>
+
+  <!-- Stage 2 -->
+  <section class="stage disabled" id="stage2">
+    <div class="stage-head">
+      <span class="stage-num">02</span>
+      <span class="stage-title">Write</span>
+    </div>
+    <p class="stage-sub">MOSS-VL's read of your video, turned into a generation prompt.</p>
+
+    <div class="label-card">
+      <div class="strip"><span>Generation prompt</span><span id="tokenMeta">—</span></div>
+      <textarea id="promptOut" placeholder="Your prompt will appear here after analysis."></textarea>
+    </div>
+    <div class="meta-line" id="analysisMeta"></div>
+
+    <div class="toggle-row" style="margin-top:20px;">
+      <div class="toggle" id="refineToggle" role="switch" aria-checked="false" tabindex="0"></div>
+      <span>Refine this prompt for a specific style before generating</span>
+    </div>
+    <div id="refineFields" style="display:none; margin-top:14px;">
+      <label class="field-label" for="styleInput">Describe the style you want</label>
+      <input type="text" id="styleInput" placeholder="e.g. moody film noir lighting, handheld camera, 35mm grain">
+    </div>
+
+    <div class="row">
+      <button class="primary" id="continueBtn">Use this prompt →</button>
+    </div>
+    <div class="status" id="status2"></div>
+  </section>
+
+  <div class="film-connector"></div>
+
+  <!-- Stage 3 -->
+  <section class="stage disabled" id="stage3">
+    <div class="stage-head">
+      <span class="stage-num">03</span>
+      <span class="stage-title">Render</span>
+    </div>
+    <p class="stage-sub">Generate a new video from the prompt using Seedance 2.5.</p>
+
+    <label class="field-label" for="seedanceKey">Seedance API key</label>
+    <input type="password" id="seedanceKey" placeholder="sk-...">
+
+    <div class="note">
+      <strong>Not wired up yet.</strong> This step needs the actual Seedance 2.5 API reference (endpoint, auth header, request body shape) before it can call the real service. Drop the docs in and this becomes a live call instead of a placeholder.
+    </div>
+
+    <div class="row">
+      <button class="primary" id="generateBtn">Generate video</button>
+    </div>
+    <div class="status" id="status3"></div>
+  </section>
+
+</main>
+
+<footer>
+  Built for one-off testing. Keys are held in memory for this browser tab only and are never sent anywhere but the API they belong to.
+</footer>
+
+<script>
+  // decorative sprockets
+  const sprocketRow = document.getElementById('sprockets');
+  for(let i=0;i<40;i++){ const s=document.createElement('span'); sprocketRow.appendChild(s); }
+
+  const apiKeyInput = document.getElementById('apiKey');
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const preview = document.getElementById('preview');
+  const dzText = document.getElementById('dzText');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const status1 = document.getElementById('status1');
+  const stage2 = document.getElementById('stage2');
+  const stage3 = document.getElementById('stage3');
+  const promptOut = document.getElementById('promptOut');
+  const tokenMeta = document.getElementById('tokenMeta');
+  const analysisMeta = document.getElementById('analysisMeta');
+  const refineToggle = document.getElementById('refineToggle');
+  const refineFields = document.getElementById('refineFields');
+  const continueBtn = document.getElementById('continueBtn');
+  const status2 = document.getElementById('status2');
+  const generateBtn = document.getElementById('generateBtn');
+  const status3 = document.getElementById('status3');
+
+  let selectedFile = null;
+
+  function setStatus(el, text, kind){
+    el.textContent = text || '';
+    el.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+  ['dragover'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); }));
+  dropzone.addEventListener('drop', e => {
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
+
+  function handleFile(file){
+    selectedFile = file;
+    dropzone.classList.add('has-file');
+    dzText.innerHTML = '<strong>' + file.name + '</strong> — ' + (file.size / (1024*1024)).toFixed(1) + ' MB';
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    checkReady();
+  }
+
+  apiKeyInput.addEventListener('input', checkReady);
+  function checkReady(){
+    analyzeBtn.disabled = !(apiKeyInput.value.trim() && selectedFile);
+  }
+
+  analyzeBtn.addEventListener('click', async () => {
+    setStatus(status1, 'Uploading and analyzing… this can take a moment for larger clips.');
+    analyzeBtn.disabled = true;
+    try{
+      const form = new FormData();
+      form.append('apiKey', apiKeyInput.value.trim());
+      form.append('video', selectedFile);
+
+      const res = await fetch('/api/analyze', { method:'POST', body: form });
+      const data = await res.json();
+
+      if(!res.ok){
+        throw new Error(data.error || 'Analysis failed.');
+      }
+
+      promptOut.value = data.prompt || '';
+      tokenMeta.textContent = (data.usage ? data.usage.total_tokens + ' tokens' : '—');
+      analysisMeta.innerHTML =
+        (data.responseId ? 'Response: ' + data.responseId : '') +
+        (data.fileId ? ' · File: ' + data.fileId : '');
+
+      stage2.classList.remove('disabled');
+      setStatus(status1, 'Done.', 'ok');
+    }catch(err){
+      setStatus(status1, err.message, 'err');
+      analyzeBtn.disabled = false;
+    }
+  });
+
+  refineToggle.addEventListener('click', () => {
+    const on = refineToggle.classList.toggle('on');
+    refineToggle.setAttribute('aria-checked', on);
+    refineFields.style.display = on ? 'block' : 'none';
+  });
+
+  continueBtn.addEventListener('click', async () => {
+    const wantsRefine = refineToggle.classList.contains('on');
+    if(!wantsRefine){
+      stage3.classList.remove('disabled');
+      setStatus(status2, 'Prompt locked in.', 'ok');
+      return;
+    }
+    const style = document.getElementById('styleInput').value.trim();
+    if(!style){
+      setStatus(status2, 'Add a style description, or turn off refinement.', 'err');
+      return;
+    }
+    setStatus(status2, 'Refining prompt…');
+    try{
+      const res = await fetch('/api/refine', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: promptOut.value, style })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || 'Refine failed.');
+      promptOut.value = data.refinedPrompt;
+      stage3.classList.remove('disabled');
+      setStatus(status2, 'Refined.', 'ok');
+    }catch(err){
+      setStatus(status2, err.message, 'err');
+    }
+  });
+
+  generateBtn.addEventListener('click', async () => {
+    setStatus(status3, 'Seedance 2.5 isn\'t connected yet — see the note above.', 'err');
+  });
+</script>
+
+</body>
+</html>
