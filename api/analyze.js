@@ -4,15 +4,12 @@
 // /v1/responses, and returns a text prompt an end user could paste into
 // a video generation tool.
 //
-// ASSUMPTION FLAGGED: the exact Upload File endpoint (path, field name,
-// response shape) was referenced in the MOSS docs as a link but its full
-// spec wasn't captured from the screenshot. This function calls
-// POST {MOSS_BASE_URL}/v1/files with the video as multipart form data and
-// expects { id: "<file_id>" } back, which matches the general shape used
-// elsewhere in the docs (file_id, id fields). If the real endpoint differs,
-// this is the one function that needs updating — everything else (the
-// /v1/responses call, the UI, the response parsing) is built from the
-// documented and already-verified schema.
+// ASSUMPTION PARTIALLY RESOLVED: a live 400 error confirmed the upload call
+// needs a `purpose` field (now set to "vision", matching the working Claude
+// Code test from earlier). The endpoint path (POST /v1/files), the `file`
+// field name, and the response shape ({ id } or { file_id }) are still
+// unverified against the real spec — if uploads still fail after this fix,
+// those are the next things to check.
 
 export const config = {
   api: {
@@ -49,9 +46,9 @@ export default async function handler(req, res) {
     if (!videoFile) return res.status(400).json({ error: 'Missing video file.' });
 
     // --- Step 1: upload the video to get a file_id ---
-    // NOTE: this is the flagged assumption — see comment at top of file.
     const uploadForm = new FormData();
     uploadForm.append('file', new Blob([fs.readFileSync(videoFile.filepath)]), videoFile.originalFilename || 'video.mp4');
+    uploadForm.append('purpose', 'vision'); // confirmed required by the live API — see earlier Claude Code test
 
     const uploadRes = await fetch(`${MOSS_BASE_URL}/v1/files`, {
       method: 'POST',
