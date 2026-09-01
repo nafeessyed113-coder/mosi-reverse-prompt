@@ -1,6 +1,7 @@
+[README.md](https://github.com/user-attachments/files/31668326/README.md)
 # Reverse Prompt
 
-Upload a video → MOSS-VL analyzes it → get a generation prompt → (optional) refine it for a style → (planned) generate a new video with Seedance 2.5.
+Upload a video → MOSS-VL analyzes it → get a generation prompt → (optional) refine it for a style → (planned) generate a new video with MiniMax-H3.
 
 ## What's working right now
 
@@ -11,7 +12,7 @@ Upload a video → MOSS-VL analyzes it → get a generation prompt → (optional
 ## What's NOT working yet
 
 - **Video upload to MOSS-VL**: the docs referenced an "Upload File" endpoint as a link but didn't show its full spec (path, field name, response shape). `api/analyze.js` guesses `POST /v1/files` with a `file` field, returning `{ id }`. **This needs to be checked against the real spec or the working Python script from the earlier Claude Code test**, since that script already uploaded successfully once.
-- **Seedance 2.5 generation**: completely stubbed in `api/generate.js`. Needs the real endpoint, auth format, and request/response shape before this can call anything.
+- **MiniMax-H3 generation**: completely stubbed in `api/generate.js`. MiniMax's own docs confirm this is task-based (Create Video Generation Task → poll Query Task with the task_id), not a single call. Needs the exact request body for Create Video Generation Task before this can call anything.
 
 ## To deploy
 
