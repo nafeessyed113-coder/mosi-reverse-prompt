@@ -388,13 +388,13 @@
       <span class="stage-num">03</span>
       <span class="stage-title">Render</span>
     </div>
-    <p class="stage-sub">Generate a new video from the prompt using Seedance 2.5.</p>
+    <p class="stage-sub">Generate a new video from the prompt using MiniMax-H3.</p>
 
-    <label class="field-label" for="seedanceKey">Seedance API key</label>
+    <label class="field-label" for="seedanceKey">MiniMax API key</label>
     <input type="password" id="seedanceKey" placeholder="sk-...">
 
     <div class="note">
-      <strong>Not wired up yet.</strong> This step needs the actual Seedance 2.5 API reference (endpoint, auth header, request body shape) before it can call the real service. Drop the docs in and this becomes a live call instead of a placeholder.
+      <strong>Not wired up yet.</strong> MiniMax-H3 uses a task-based flow: create a video generation task, then poll a Query Task endpoint with the task_id until it's done. This needs the exact Create Video Generation Task request body before it can call the real service. Drop that doc page in and this becomes a live call instead of a placeholder.
     </div>
 
     <div class="row">
@@ -528,7 +528,7 @@
   });
 
   generateBtn.addEventListener('click', async () => {
-    setStatus(status3, 'Seedance 2.5 isn\'t connected yet — see the note above.', 'err');
+    setStatus(status3, 'MiniMax-H3 isn\'t connected yet — see the note above.', 'err');
   });
 </script>
 
