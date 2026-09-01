@@ -1,28 +1,27 @@
-[README.md](https://github.com/user-attachments/files/31668326/README.md)
+[README.md](https://github.com/user-attachments/files/31670601/README.md)
 # Reverse Prompt
 
-Upload a video → MOSS-VL analyzes it → get a generation prompt → (optional) refine it for a style → (planned) generate a new video with MiniMax-H3.
+Upload a video → MOSS-VL analyzes it → get a generation prompt → (optional) refine it for a style → generate a new video with MiniMax-H3.
 
 ## What's working right now
 
 - Full UI: upload, key entry, three-stage flow
-- `/api/analyze` — real call to MOSS-VL's documented `/v1/responses` endpoint
-- `/api/refine` — real call to Claude, optional style rewrite step
+- `/api/analyze` — real call to MOSS-VL's `/v1/responses` endpoint, including the required `purpose: "vision"` field on upload (confirmed via a live 400 error)
+- `/api/refine` — real call to Claude, optional style rewrite step (needs `ANTHROPIC_API_KEY` set in Vercel)
+- `/api/generate` — real call to MiniMax-H3: creates a video generation task, polls until done, returns the finished video URL
 
-## What's NOT working yet
+## What's still unverified
 
-- **Video upload to MOSS-VL**: the docs referenced an "Upload File" endpoint as a link but didn't show its full spec (path, field name, response shape). `api/analyze.js` guesses `POST /v1/files` with a `file` field, returning `{ id }`. **This needs to be checked against the real spec or the working Python script from the earlier Claude Code test**, since that script already uploaded successfully once.
-- **MiniMax-H3 generation**: completely stubbed in `api/generate.js`. MiniMax's own docs confirm this is task-based (Create Video Generation Task → poll Query Task with the task_id), not a single call. Needs the exact request body for Create Video Generation Task before this can call anything.
+- **MOSS-VL upload endpoint shape**: `purpose` is confirmed required, but the exact response field (`id` vs `file_id`) is still unconfirmed against the official spec.
+- **MiniMax Query Task endpoint**: `GET /v2/query/video_generation?task_id=...` is inferred from a reference to it in MiniMax's regeneration doc, not from its own dedicated doc page. If polling errors out, this is the first thing to check.
 
 ## To deploy
 
 1. Push this folder to a GitHub repo.
 2. Go to vercel.com, sign in with GitHub (free), import the repo.
-3. If you're using the refine step, add an environment variable in the Vercel project settings: `ANTHROPIC_API_KEY` = your own Claude API key. (This is your cost, not the visitor's — they only enter a MOSI.AI key.)
+3. In the Vercel project's Environment Variables (under General), add `ANTHROPIC_API_KEY` = your own Claude API key, only needed for the optional refine step.
 4. Deploy. Vercel gives you a live URL automatically.
 
-## Before this is demo-ready
+## Before filming
 
-1. Fix the upload endpoint in `api/analyze.js` (see above).
-2. Fill in `api/generate.js` once Seedance 2.5 docs are available.
-3. Test the full flow end to end with a real video and a real MOSI.AI key.
+1. Run the full flow once end to end with a real video, a real MOSI.AI key, and a real MiniMax key to confirm nothing breaks mid-recording.
