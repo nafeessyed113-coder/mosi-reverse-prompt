@@ -388,13 +388,19 @@
       <span class="stage-num">03</span>
       <span class="stage-title">Render</span>
     </div>
-    <p class="stage-sub">Generate a new video from the prompt using MiniMax-H3.</p>
+    <p class="stage-sub">Generate a new video from the prompt. Pick a model.</p>
 
-    <label class="field-label" for="seedanceKey">MiniMax API key</label>
+    <label class="field-label" for="providerSelect">Video model</label>
+    <select id="providerSelect" style="width:100%; background: var(--bg); border: 1px solid var(--line); color: var(--ink); padding: 12px 14px; border-radius: var(--radius); font-family:'IBM Plex Mono', monospace; font-size: 0.9rem; margin-bottom: 18px;">
+      <option value="minimax-h3">MiniMax-H3</option>
+      <option value="seedance-2.5-flaq">Seedance 2.5 (via Flaq AI)</option>
+    </select>
+
+    <label class="field-label" for="seedanceKey">API key for selected model</label>
     <input type="password" id="seedanceKey" placeholder="sk-...">
 
     <div class="note">
-      <strong>Live, with one caveat.</strong> This calls MiniMax-H3 for real and polls until your video is ready, usually 1-3 minutes. The polling endpoint's exact shape is inferred from a secondary doc reference rather than its own page, so if this errors partway through, that's the first thing to check.
+      <strong>Both models are live.</strong> Each provider needs its own key, MiniMax and Flaq AI keys aren't interchangeable, switch the dropdown before pasting the matching key.
     </div>
 
     <div class="row">
@@ -529,29 +535,34 @@
   });
 
   generateBtn.addEventListener('click', async () => {
+    const provider = document.getElementById('providerSelect').value;
     const key = document.getElementById('seedanceKey').value.trim();
     const prompt = promptOut.value.trim();
 
-    if (!key) { setStatus(status3, 'Enter your MiniMax API key first.', 'err'); return; }
+    if (!key) { setStatus(status3, 'Enter the API key for the selected model.', 'err'); return; }
     if (!prompt) { setStatus(status3, 'No prompt to generate from.', 'err'); return; }
 
     generateBtn.disabled = true;
-    setStatus(status3, 'Submitting task…');
+    setStatus(status3, 'Submitting task, this can take a few minutes…');
 
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: key, prompt }),
+        body: JSON.stringify({ provider, apiKey: key, prompt }),
       });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Generation failed.');
+      if (!res.ok && res.status !== 202) throw new Error(data.error || 'Generation failed.');
+      if (data.pending) {
+        setStatus(status3, `Task ${data.taskId} is still processing after the wait window. It may finish soon, check back with this task_id.`, 'err');
+        return;
+      }
 
       const resultVideo = document.getElementById('resultVideo');
       resultVideo.src = data.videoUrl;
       resultVideo.style.display = 'block';
-      setStatus(status3, `Done. Task ${data.taskId}, ${data.resolution || ''} · ${data.duration || ''}s`, 'ok');
+      setStatus(status3, `Done. Task ${data.taskId}${data.resolution ? ' · ' + data.resolution : ''}${data.duration ? ' · ' + data.duration + 's' : ''}`, 'ok');
     } catch (err) {
       setStatus(status3, err.message, 'err');
     } finally {
